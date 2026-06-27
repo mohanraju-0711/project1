@@ -1,0 +1,207 @@
+"""
+Single-file AI/ML project demo using:
+Python, SQL, TensorFlow, PyTorch, Scikit-Learn, Pandas, NumPy,
+Spark, AWS SageMaker, Azure ML, Google Vertex AI, Kubernetes.
+
+Project: Student Placement Prediction
+"""
+
+# -----------------------------
+# Basic Python + SQL
+# -----------------------------
+import sqlite3
+import numpy as np
+import pandas as pd
+
+# Create SQL database
+conn = sqlite3.connect("students.db")
+cursor = conn.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS students (
+    id INTEGER PRIMARY KEY,
+    cgpa REAL,
+    projects INTEGER,
+    internships INTEGER,
+    aptitude_score REAL,
+    placed INTEGER
+)
+""")
+
+cursor.execute("DELETE FROM students")
+
+sample_data = [
+    (1, 8.5, 3, 1, 78, 1),
+    (2, 6.2, 1, 0, 55, 0),
+    (3, 9.1, 4, 2, 88, 1),
+    (4, 7.0, 2, 0, 62, 0),
+    (5, 8.0, 3, 1, 75, 1),
+    (6, 5.9, 1, 0, 50, 0),
+]
+
+cursor.executemany(
+    "INSERT INTO students VALUES (?, ?, ?, ?, ?, ?)",
+    sample_data
+)
+
+conn.commit()
+
+# Load SQL data into Pandas
+df = pd.read_sql_query("SELECT * FROM students", conn)
+
+print("\nDataset from SQL:")
+print(df)
+
+# -----------------------------
+# Pandas + NumPy
+# -----------------------------
+X = df[["cgpa", "projects", "internships", "aptitude_score"]].values
+y = df["placed"].values
+
+print("\nFeature Matrix using NumPy:")
+print(X)
+
+# -----------------------------
+# Scikit-Learn Model
+# -----------------------------
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=42
+)
+
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+sk_model = LogisticRegression()
+sk_model.fit(X_train_scaled, y_train)
+
+sk_pred = sk_model.predict(X_test_scaled)
+print("\nScikit-Learn Accuracy:", accuracy_score(y_test, sk_pred))
+
+# -----------------------------
+# TensorFlow Model
+# -----------------------------
+import tensorflow as tf
+
+tf_model = tf.keras.Sequential([
+    tf.keras.layers.Dense(8, activation="relu", input_shape=(4,)),
+    tf.keras.layers.Dense(1, activation="sigmoid")
+])
+
+tf_model.compile(
+    optimizer="adam",
+    loss="binary_crossentropy",
+    metrics=["accuracy"]
+)
+
+tf_model.fit(X_train_scaled, y_train, epochs=10, verbose=0)
+
+tf_loss, tf_acc = tf_model.evaluate(X_test_scaled, y_test, verbose=0)
+print("TensorFlow Accuracy:", tf_acc)
+
+# -----------------------------
+# PyTorch Model
+# -----------------------------
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+X_train_tensor = torch.tensor(X_train_scaled, dtype=torch.float32)
+y_train_tensor = torch.tensor(y_train.reshape(-1, 1), dtype=torch.float32)
+
+class PlacementModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.network = nn.Sequential(
+            nn.Linear(4, 8),
+            nn.ReLU(),
+            nn.Linear(8, 1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        return self.network(x)
+
+torch_model = PlacementModel()
+criterion = nn.BCELoss()
+optimizer = optim.Adam(torch_model.parameters(), lr=0.01)
+
+for epoch in range(10):
+    optimizer.zero_grad()
+    output = torch_model(X_train_tensor)
+    loss = criterion(output, y_train_tensor)
+    loss.backward()
+    optimizer.step()
+
+print("PyTorch Training Loss:", loss.item())
+
+# -----------------------------
+# Spark
+# -----------------------------
+try:
+    from pyspark.sql import SparkSession
+
+    spark = SparkSession.builder \
+        .appName("StudentPlacementSpark") \
+        .getOrCreate()
+
+    spark_df = spark.createDataFrame(df)
+
+    print("\nSpark DataFrame:")
+    spark_df.show()
+
+    spark.stop()
+
+except Exception as e:
+    print("\nSpark not available:", e)
+
+# -----------------------------
+# AWS SageMaker Placeholder
+# -----------------------------
+def aws_sagemaker_section():
+    print("\nAWS SageMaker:")
+    print("Here you can upload dataset/model to S3 and train using SageMaker Estimator.")
+
+# -----------------------------
+# Azure ML Placeholder
+# -----------------------------
+def azure_ml_section():
+    print("\nAzure ML:")
+    print("Here you can log experiments using Azure ML Workspace and Experiment.")
+
+# -----------------------------
+# Google Vertex AI Placeholder
+# -----------------------------
+def vertex_ai_section():
+    print("\nGoogle Vertex AI:")
+    print("Here you can upload model artifacts and create a Vertex AI training job.")
+
+# -----------------------------
+# Kubernetes Placeholder
+# -----------------------------
+def kubernetes_section():
+    print("\nKubernetes:")
+    print("This ML app can be containerized using Docker and deployed on Kubernetes.")
+
+aws_sagemaker_section()
+azure_ml_section()
+vertex_ai_section()
+kubernetes_section()
+
+# -----------------------------
+# Certification Relevance
+# -----------------------------
+print("""
+Relevant for:
+- B.Tech / B.E. / MCA / M.Tech Computer Science students
+- AWS Machine Learning Specialty preparation
+- Google Professional ML Engineer preparation
+- End-to-end ML engineering basics
+""")
+
+conn.close()
